@@ -1,4 +1,4 @@
-package com.example.therickandmorty.model
+package com.example.therickandmorty.model.character
 
 import android.graphics.Bitmap
 

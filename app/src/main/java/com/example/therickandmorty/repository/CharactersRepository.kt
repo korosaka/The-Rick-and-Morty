@@ -1,7 +1,7 @@
 package com.example.therickandmorty.repository
 
-import com.example.therickandmorty.model.CharacterApi
-import com.example.therickandmorty.model.CharacterHeadline
+import com.example.therickandmorty.model.api.CharacterApi
+import com.example.therickandmorty.model.character.CharacterHeadline
 import com.example.therickandmorty.model.Common
 import com.example.therickandmorty.model.entity.CharactersEntity
 import retrofit2.Response

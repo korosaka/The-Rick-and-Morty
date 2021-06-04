@@ -1,4 +1,4 @@
-package com.example.therickandmorty.model
+package com.example.therickandmorty.model.api
 
 import com.example.therickandmorty.model.entity.CharactersApiEntity
 import com.example.therickandmorty.model.entity.CharactersEntity
