@@ -2,11 +2,11 @@ package com.example.therickandmorty.repository.characters
 
 import com.example.therickandmorty.model.character.CharacterHeadline
 
-class DummyCharactersRepository: CharactersRepositoryInterface {
+class DummyCharactersRepository : CharactersRepositoryInterface {
 
     override fun fetchCharacters(urlStr: String): MutableList<CharacterHeadline>? {
         val dummyList: MutableList<CharacterHeadline> = mutableListOf()
-        for (i in 0..5000) {
+        for (i in 0..500) {
             dummyList.add(createRandomCharacter())
         }
         return dummyList
@@ -21,8 +21,6 @@ class DummyCharactersRepository: CharactersRepositoryInterface {
             null
         )
     }
-
-
 
 
 }

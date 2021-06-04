@@ -11,10 +11,11 @@ import com.example.therickandmorty.repository.CharacterImageRepository
 import com.example.therickandmorty.repository.CharactersApiRepository
 import com.example.therickandmorty.repository.characters.CharactersRepository
 import com.example.therickandmorty.repository.characters.CharactersRepositoryInterface
-import com.example.therickandmorty.repository.characters.DummyCharactersRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 class CharacterListViewModel : ViewModel() {
 
@@ -48,42 +49,73 @@ class CharacterListViewModel : ViewModel() {
             // TASK-1: fetching characters API URL
             val charactersApi =
                 charactersApiRepository.fetchCharactersApiUrl()
-                    ?: return@launch //TODO error handling
+                    ?: return@launch //TODO error action should be shown
             Common.charactersApiUrl = charactersApi // to use in other Activity
 
             // TASK-2: fetching characters data(except image)
             characters = charactersRepository.fetchCharacters(charactersApi)
-                ?: return@launch //TODO error handling
+                ?: return@launch //TODO error action should be shown
+            if (characters.size == 0) return@launch
             viewModelScope.launch(Dispatchers.Main) {
-                liveCharacters.value = filterCharacters()
+                liveCharacters.value = characters
             }
 
             // TASK-3: fetching character images
-            var taskCount = 0
-            val taskLimit = 5
+            var runningTaskCount = 0
+            var doneTaskCount = 0
+            val runningTaskLimit = 5
             val waitingTime = 100.toLong()
+            val usingMainThreadInterval = 1000.toLong()
+            var isFetchingImages = true
+            val mutex = Mutex()
+
+            /**
+             * to avoid to occupy Main-Thread too frequently,
+             * do the process with time interval
+             * Doing the process every time fetching a image will cause a bug of ignoring ui events
+             */
+            viewModelScope.launch(Dispatchers.IO) {
+                while (isFetchingImages) {
+                    delay(usingMainThreadInterval)
+                    viewModelScope.launch(Dispatchers.Main) {
+                        liveCharacters.value = characters
+                    }
+                }
+            }
 
             for (i in characters.indices) {
-
                 /**
-                 * to prevent lots of tasks from running at the same,
+                 * to prevent lots of tasks from running at the same time,
                  * until the number of running tasks is under the limit,
                  * never launch another task
                  */
-                while (taskCount > taskLimit) {
+                while (runningTaskCount > runningTaskLimit) {
                     delay(waitingTime)
                 }
 
                 viewModelScope.launch(Dispatchers.IO) {
                     val urlStr = characters[i].imageUrl
 
-                    taskCount++
+                    mutex.withLock {
+                        runningTaskCount++
+                    }
                     val image = characterImageRepository.fetchImage(urlStr)
-                    taskCount--
+                    mutex.withLock {
+                        runningTaskCount--
+                    }
 
-                    viewModelScope.launch(Dispatchers.Main) {
-                        characters[i].image = image
-                        liveCharacters.value = filterCharacters()
+                    characters[i].image = image
+
+                    /**
+                     * without mutex, counting massive number(ex: 10,000) can not be done correctly
+                     * Ref: https://kotlinlang.org/docs/shared-mutable-state-and-concurrency.html#mutual-exclusion
+                     */
+                    mutex.withLock {
+                        doneTaskCount++ // even if fetching image is failed, count up
+                    }
+                    if (doneTaskCount == characters.size) {
+                        isFetchingImages = false
+                        println("test: every task has been done!")
                     }
                 }
             }
