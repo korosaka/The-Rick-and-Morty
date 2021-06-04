@@ -9,14 +9,17 @@ import com.example.therickandmorty.model.Common
 import com.example.therickandmorty.model.character.CharacterHeadline
 import com.example.therickandmorty.repository.CharacterImageRepository
 import com.example.therickandmorty.repository.CharactersApiRepository
-import com.example.therickandmorty.repository.CharactersRepository
+import com.example.therickandmorty.repository.characters.CharactersRepository
+import com.example.therickandmorty.repository.characters.CharactersRepositoryInterface
+import com.example.therickandmorty.repository.characters.DummyCharactersRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class CharacterListViewModel : ViewModel() {
 
     private val charactersApiRepository = CharactersApiRepository()
-    private val charactersRepository = CharactersRepository()
+    private val charactersRepository: CharactersRepositoryInterface
     private val characterImageRepository = CharacterImageRepository()
 
     private var characters: MutableList<CharacterHeadline> = mutableListOf()
@@ -28,6 +31,13 @@ class CharacterListViewModel : ViewModel() {
     init {
         filteringWord.value = Common.EMPTY_STRING
         liveCharacters = MutableLiveData(characters)
+
+        /**
+         * the repo can be switched with test data
+         */
+        charactersRepository = CharactersRepository()
+//        charactersRepository = DummyCharactersRepository() // test for a large amount of character
+
         fetchCharacters()
     }
 
@@ -49,10 +59,28 @@ class CharacterListViewModel : ViewModel() {
             }
 
             // TASK-3: fetching character images
+            var taskCount = 0
+            val taskLimit = 5
+            val waitingTime = 100.toLong()
+
             for (i in characters.indices) {
+
+                /**
+                 * to prevent lots of tasks from running at the same,
+                 * until the number of running tasks is under the limit,
+                 * never launch another task
+                 */
+                while (taskCount > taskLimit) {
+                    delay(waitingTime)
+                }
+
                 viewModelScope.launch(Dispatchers.IO) {
                     val urlStr = characters[i].imageUrl
+
+                    taskCount++
                     val image = characterImageRepository.fetchImage(urlStr)
+                    taskCount--
+
                     viewModelScope.launch(Dispatchers.Main) {
                         characters[i].image = image
                         liveCharacters.value = filterCharacters()

@@ -1,4 +1,4 @@
-package com.example.therickandmorty.repository
+package com.example.therickandmorty.repository.characters
 
 import com.example.therickandmorty.model.api.CharacterApi
 import com.example.therickandmorty.model.character.CharacterHeadline
@@ -8,9 +8,9 @@ import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
-class CharactersRepository {
+class CharactersRepository : CharactersRepositoryInterface {
 
-    fun fetchCharacters(urlStr: String): MutableList<CharacterHeadline>? {
+    override fun fetchCharacters(urlStr: String): MutableList<CharacterHeadline>? {
         return try {
             val response = executeAPI(urlStr)
             return extractCharacters(response.body()!!)
