@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <data>
+
+        <variable
+            name="character_headline"
+            type="com.example.therickandmorty.model.character.CharacterHeadline" />
+
+        <variable
+            name="view_model"
+            type="com.example.therickandmorty.view_model.CharacterListViewModel" />
+    </data>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="80dp"
+        android:background="#7fbfff"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:layout_width="70dp"
+            android:layout_height="70dp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginLeft="5dp"
+            android:background="#808080"
+            app:imageBitmap="@{character_headline.image}" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:text="@{character_headline.name}"
+            android:textColor="#000000" />
+
+    </LinearLayout>
+</layout>

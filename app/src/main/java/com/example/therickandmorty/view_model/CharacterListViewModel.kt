@@ -36,7 +36,8 @@ class CharacterListViewModel : ViewModel() {
             Common.charactersApiUrl = charactersApi // to use in other Activity
 
             // TASK-2: fetching characters data(except image)
-            characters = charactersRepository.fetchCharacters(charactersApi) ?: return@launch //TODO error handling
+            characters = charactersRepository.fetchCharacters(charactersApi)
+                ?: return@launch //TODO error handling
             viewModelScope.launch(Dispatchers.Main) {
                 liveCharacters.value = characters
             }
@@ -54,4 +55,7 @@ class CharacterListViewModel : ViewModel() {
             }
         }
     }
+
+    fun getCharacter(index: Int) = liveCharacters.value?.get(index)
+    fun getCharacterCount() = liveCharacters.value?.size ?: 0
 }
