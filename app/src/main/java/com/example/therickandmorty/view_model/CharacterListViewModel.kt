@@ -23,6 +23,7 @@ class CharacterListViewModel : ViewModel() {
     var liveCharacters: MutableLiveData<MutableList<CharacterHeadline>> = MutableLiveData()
 
     var filteringWord: MutableLiveData<String> = MutableLiveData()
+    var clickLister: ClickItemListener? = null
 
     init {
         filteringWord.value = Common.EMPTY_STRING
@@ -87,4 +88,12 @@ class CharacterListViewModel : ViewModel() {
 
     fun getCharacter(index: Int) = liveCharacters.value?.get(index)
     fun getCharacterCount() = liveCharacters.value?.size ?: 0
+
+    fun onClickCharacter(character: CharacterHeadline) {
+        clickLister?.onClickItem(character)
+    }
+}
+
+interface ClickItemListener {
+    fun onClickItem(item: CharacterHeadline)
 }
