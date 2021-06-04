@@ -1,5 +1,6 @@
 package com.example.therickandmorty.model.api
 
+import com.example.therickandmorty.model.entity.CharacterDetailEntity
 import com.example.therickandmorty.model.entity.CharactersApiEntity
 import com.example.therickandmorty.model.entity.CharactersEntity
 import retrofit2.Call
@@ -12,4 +13,7 @@ interface CharacterApi {
 
     @GET
     fun fetchCharacters(@Url charactersUrlStr: String): Call<CharactersEntity>
+
+    @GET
+    fun fetchCharacterDetail(@Url characterUrlStr: String): Call<CharacterDetailEntity>
 }
