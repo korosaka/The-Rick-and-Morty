@@ -6,5 +6,6 @@ class Common {
         const val BASE_URL = "https://rickandmortyapi.com/"
 
         const val EMPTY_STRING = ""
+        const val CHARACTER_ID_KEY = "character_id"
     }
 }

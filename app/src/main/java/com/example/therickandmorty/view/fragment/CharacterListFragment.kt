@@ -12,6 +12,7 @@ import androidx.lifecycle.observe
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.therickandmorty.R
 import com.example.therickandmorty.databinding.FragmentCharacterListBinding
+import com.example.therickandmorty.model.Common
 import com.example.therickandmorty.model.character.CharacterHeadline
 import com.example.therickandmorty.view.activity.CharacterDetailActivity
 import com.example.therickandmorty.view.recycler_view.CharacterRecyclerViewAdapter
@@ -66,7 +67,7 @@ class CharacterListFragment : Fragment() {
 
     private fun moveToCharacterDetail(id: String) {
         val intent = Intent(activity, CharacterDetailActivity::class.java)
-        intent.putExtra("character_id", id)
+        intent.putExtra(Common.CHARACTER_ID_KEY, id)
         activity?.startActivity(intent)
     }
 }
