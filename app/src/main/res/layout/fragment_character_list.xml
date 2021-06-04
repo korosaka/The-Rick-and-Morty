@@ -26,7 +26,8 @@
             android:layout_margin="5dp"
             android:background="#ffffff"
             android:inputType="text"
-            android:maxLines="1" />
+            android:maxLines="1"
+            android:text="@={view_model.filteringWord}" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/characters_recycler_view"

@@ -39,6 +39,8 @@ class CharacterListFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        filtering_edit.addTextChangedListener(viewModel.createTextChangeListener())
+
         val recyclerView = characters_recycler_view
         recyclerView.setHasFixedSize(true)
         recyclerView.layoutManager = LinearLayoutManager(activity)
