@@ -1,7 +1,8 @@
-package com.example.therickandmorty
+package com.example.therickandmorty.view.activity
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import com.example.therickandmorty.R
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
