@@ -6,6 +6,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.therickandmorty.model.Common
+import com.example.therickandmorty.model.DataType
 import com.example.therickandmorty.model.character.CharacterHeadline
 import com.example.therickandmorty.repository.CharacterImageRepository
 import com.example.therickandmorty.repository.CharactersApiRepository
@@ -35,14 +36,15 @@ class CharacterListViewModel : ViewModel() {
         filteringWord.value = Common.EMPTY_STRING
         statusMessage.value = "default"
         liveCharacters = MutableLiveData(characters)
-
-        /**
-         * the repo can be switched with test data
-         */
-        charactersRepository = CharactersRepository()
-//        charactersRepository = DummyCharactersRepository() // test for a large amount of character
-
+        charactersRepository = createCharactersRepository()
         fetchCharacters()
+    }
+
+    private fun createCharactersRepository(): CharactersRepositoryInterface {
+        return when (Common.dataType) {
+            DataType.PRODUCT -> CharactersRepository()
+            else -> DummyCharactersRepository()
+        }
     }
 
     private fun fetchCharacters() {
