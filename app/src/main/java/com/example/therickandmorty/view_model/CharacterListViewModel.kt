@@ -48,7 +48,6 @@ class CharacterListViewModel : ViewModel() {
     }
 
     private fun fetchCharacters() {
-
         /**
          * each Task will wait until the previous Task has been done.
          * Task-2 never starts until Task-1 has been finished
@@ -59,25 +58,15 @@ class CharacterListViewModel : ViewModel() {
             val charactersApi = fetchApiUrl() ?: return@launch
 
             // TASK-2: fetching characters data(except image)
-            changeStatusMessage("Fetching characters....")
-            val fetchedCharacters = charactersRepository.fetchCharacters(charactersApi)
-            if (fetchedCharacters == null) {
-                changeStatusMessage("Failed fetching characters !")
-                return@launch
-            }
-            characters = fetchedCharacters
-            if (characters.size == 0) {
-                changeStatusMessage("There is no characters !")
-                return@launch
-            }
-            updateLiveCharacter()
+            fetchCharactersExceptImage(charactersApi)
+            if (characters.size == 0) return@launch
 
             // TASK-3: fetching character images
             fetchCharacterImages()
         }
     }
 
-    private fun fetchApiUrl() : String? {
+    private fun fetchApiUrl(): String? {
         changeStatusMessage("Fetching characters API....")
         val charactersApi =
             charactersApiRepository.fetchCharactersApiUrl()
@@ -88,6 +77,21 @@ class CharacterListViewModel : ViewModel() {
         Common.charactersApiUrl = charactersApi // to use in other Activity
 
         return charactersApi
+    }
+
+    private fun fetchCharactersExceptImage(apiUrlStr: String) {
+        changeStatusMessage("Fetching characters....")
+        val fetchedCharacters = charactersRepository.fetchCharacters(apiUrlStr)
+        if (fetchedCharacters == null) {
+            changeStatusMessage("Failed fetching characters !")
+            return
+        }
+        characters = fetchedCharacters
+        if (characters.size == 0) {
+            changeStatusMessage("There is no characters !")
+            return
+        }
+        updateLiveCharacter()
     }
 
     /**
