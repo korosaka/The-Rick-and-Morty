@@ -11,6 +11,7 @@ import com.example.therickandmorty.repository.CharacterImageRepository
 import com.example.therickandmorty.repository.CharactersApiRepository
 import com.example.therickandmorty.repository.characters.CharactersRepository
 import com.example.therickandmorty.repository.characters.CharactersRepositoryInterface
+import com.example.therickandmorty.repository.characters.DummyCharactersRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -28,9 +29,11 @@ class CharacterListViewModel : ViewModel() {
 
     var filteringWord: MutableLiveData<String> = MutableLiveData()
     var clickLister: ClickItemListener? = null
+    var statusMessage: MutableLiveData<String> = MutableLiveData()
 
     init {
         filteringWord.value = Common.EMPTY_STRING
+        statusMessage.value = "default"
         liveCharacters = MutableLiveData(characters)
 
         /**
@@ -47,15 +50,27 @@ class CharacterListViewModel : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
 
             // TASK-1: fetching characters API URL
+            changeStatusMessage("Fetching characters API....")
             val charactersApi =
                 charactersApiRepository.fetchCharactersApiUrl()
-                    ?: return@launch //TODO error action should be shown
+            if (charactersApi == null) {
+                changeStatusMessage("Failed fetching characters API !")
+                return@launch
+            }
             Common.charactersApiUrl = charactersApi // to use in other Activity
 
             // TASK-2: fetching characters data(except image)
-            characters = charactersRepository.fetchCharacters(charactersApi)
-                ?: return@launch //TODO error action should be shown
-            if (characters.size == 0) return@launch
+            changeStatusMessage("Fetching characters....")
+            val fetchedCharacters = charactersRepository.fetchCharacters(charactersApi)
+            if (fetchedCharacters == null) {
+                changeStatusMessage("Failed fetching characters !")
+                return@launch
+            }
+            characters = fetchedCharacters
+            if (characters.size == 0) {
+                changeStatusMessage("There is no characters !")
+                return@launch
+            }
             viewModelScope.launch(Dispatchers.Main) {
                 liveCharacters.value = characters
             }
@@ -68,6 +83,8 @@ class CharacterListViewModel : ViewModel() {
             val usingMainThreadInterval = 1000.toLong()
             var isFetchingImages = true
             val mutex = Mutex()
+
+            changeStatusMessage("Fetching character images....")
 
             /**
              * to avoid to occupy Main-Thread too frequently,
@@ -115,10 +132,16 @@ class CharacterListViewModel : ViewModel() {
                     }
                     if (doneTaskCount == characters.size) {
                         isFetchingImages = false
-                        println("test: every task has been done!")
+                        changeStatusMessage("Finished all fetching task !!!")
                     }
                 }
             }
+        }
+    }
+
+    private fun changeStatusMessage(message: String) {
+        viewModelScope.launch(Dispatchers.Main) {
+            statusMessage.value = message
         }
     }
 
