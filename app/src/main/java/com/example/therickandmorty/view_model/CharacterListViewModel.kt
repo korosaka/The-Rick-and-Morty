@@ -71,9 +71,7 @@ class CharacterListViewModel : ViewModel() {
                 changeStatusMessage("There is no characters !")
                 return@launch
             }
-            viewModelScope.launch(Dispatchers.Main) {
-                liveCharacters.value = characters
-            }
+            updateLiveCharacter()
 
             // TASK-3: fetching character images
             var runningTaskCount = 0
@@ -94,9 +92,7 @@ class CharacterListViewModel : ViewModel() {
             viewModelScope.launch(Dispatchers.IO) {
                 while (isFetchingImages) {
                     delay(usingMainThreadInterval)
-                    viewModelScope.launch(Dispatchers.Main) {
-                        liveCharacters.value = characters
-                    }
+                    updateLiveCharacter()
                 }
             }
 
@@ -142,6 +138,12 @@ class CharacterListViewModel : ViewModel() {
     private fun changeStatusMessage(message: String) {
         viewModelScope.launch(Dispatchers.Main) {
             statusMessage.value = message
+        }
+    }
+
+    private fun updateLiveCharacter() {
+        viewModelScope.launch(Dispatchers.Main) {
+            liveCharacters.value = characters
         }
     }
 
