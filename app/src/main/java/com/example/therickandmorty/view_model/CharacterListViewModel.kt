@@ -56,14 +56,7 @@ class CharacterListViewModel : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
 
             // TASK-1: fetching characters API URL
-            changeStatusMessage("Fetching characters API....")
-            val charactersApi =
-                charactersApiRepository.fetchCharactersApiUrl()
-            if (charactersApi == null) {
-                changeStatusMessage("Failed fetching characters API !")
-                return@launch
-            }
-            Common.charactersApiUrl = charactersApi // to use in other Activity
+            val charactersApi = fetchApiUrl() ?: return@launch
 
             // TASK-2: fetching characters data(except image)
             changeStatusMessage("Fetching characters....")
@@ -82,6 +75,19 @@ class CharacterListViewModel : ViewModel() {
             // TASK-3: fetching character images
             fetchCharacterImages()
         }
+    }
+
+    private fun fetchApiUrl() : String? {
+        changeStatusMessage("Fetching characters API....")
+        val charactersApi =
+            charactersApiRepository.fetchCharactersApiUrl()
+        if (charactersApi == null) {
+            changeStatusMessage("Failed fetching characters API !")
+            return null
+        }
+        Common.charactersApiUrl = charactersApi // to use in other Activity
+
+        return charactersApi
     }
 
     /**
