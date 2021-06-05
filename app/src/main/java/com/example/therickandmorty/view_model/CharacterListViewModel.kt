@@ -49,6 +49,10 @@ class CharacterListViewModel : ViewModel() {
 
     private fun fetchCharacters() {
 
+        /**
+         * each Task will wait until the previous Task has been done.
+         * Task-2 never starts until Task-1 has been finished
+         */
         viewModelScope.launch(Dispatchers.IO) {
 
             // TASK-1: fetching characters API URL
@@ -80,44 +84,38 @@ class CharacterListViewModel : ViewModel() {
         }
     }
 
+    /**
+     * these are used for fetching character images
+     */
+    private var runningTaskCount = 0
+    private var doneTaskCount = 0
+    private val runningTaskLimit = 5
+    private val waitingTime = 100.toLong()
+    private val mainThreadInterval = 1000.toLong()
+    private var isFetchingImages = true
+    private val mutex = Mutex()
+
     private suspend fun fetchCharacterImages() {
         if (characters.size == 0) return
 
-        var runningTaskCount = 0
-        var doneTaskCount = 0
-        val runningTaskLimit = 5
-        val waitingTime = 100.toLong()
-        val usingMainThreadInterval = 1000.toLong()
-        var isFetchingImages = true
-        val mutex = Mutex()
-
         changeStatusMessage("Fetching character images....")
 
-        /**
-         * to avoid to occupy Main-Thread too frequently,
-         * do the process with time interval
-         * Doing the process every time fetching a image will cause a bug of ignoring ui events
-         */
-        viewModelScope.launch(Dispatchers.IO) {
-            while (isFetchingImages) {
-                delay(usingMainThreadInterval)
-                updateLiveCharacter()
-            }
-        }
+        updateUIWithInterval()
 
+        fetchImagesManagingTaskCount()
+    }
+
+    private suspend fun fetchImagesManagingTaskCount() {
         for (i in characters.indices) {
             /**
              * to prevent lots of tasks from running at the same time,
              * until the number of running tasks is under the limit,
              * never launch another task
              */
-            while (runningTaskCount > runningTaskLimit) {
-                delay(waitingTime)
-            }
+            while (runningTaskCount > runningTaskLimit) delay(waitingTime)
 
             viewModelScope.launch(Dispatchers.IO) {
                 val urlStr = characters[i].imageUrl
-
                 mutex.withLock {
                     runningTaskCount++
                 }
@@ -125,20 +123,37 @@ class CharacterListViewModel : ViewModel() {
                 mutex.withLock {
                     runningTaskCount--
                 }
-
                 characters[i].image = image
 
-                /**
-                 * without mutex, counting massive number(ex: 10,000) can not be done correctly
-                 * Ref: https://kotlinlang.org/docs/shared-mutable-state-and-concurrency.html#mutual-exclusion
-                 */
-                mutex.withLock {
-                    doneTaskCount++ // even if fetching image is failed, count up
-                }
-                if (doneTaskCount == characters.size) {
-                    isFetchingImages = false
-                    changeStatusMessage("Finished all fetching task !!!")
-                }
+                manageDoneTaskCount()
+            }
+        }
+    }
+
+    private suspend fun manageDoneTaskCount() {
+        /**
+         * without mutex, counting massive number(ex: 1,000) can not be done correctly
+         * Ref: https://kotlinlang.org/docs/shared-mutable-state-and-concurrency.html#mutual-exclusion
+         */
+        mutex.withLock {
+            doneTaskCount++ // even if fetching image is failed, count up
+        }
+        if (doneTaskCount == characters.size) {
+            isFetchingImages = false
+            changeStatusMessage("Finished all fetching task !!!")
+        }
+    }
+
+    private fun updateUIWithInterval() {
+        /**
+         * to avoid to occupy Main-Thread too frequently,
+         * do the process with time interval
+         * without interval, doing the process every time fetching a image will cause a bug of ignoring ui events
+         */
+        viewModelScope.launch(Dispatchers.IO) {
+            while (isFetchingImages) {
+                delay(mainThreadInterval)
+                updateLiveCharacter()
             }
         }
     }
