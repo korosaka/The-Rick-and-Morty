@@ -74,62 +74,68 @@ class CharacterListViewModel : ViewModel() {
             updateLiveCharacter()
 
             // TASK-3: fetching character images
-            var runningTaskCount = 0
-            var doneTaskCount = 0
-            val runningTaskLimit = 5
-            val waitingTime = 100.toLong()
-            val usingMainThreadInterval = 1000.toLong()
-            var isFetchingImages = true
-            val mutex = Mutex()
+            fetchCharacterImages()
+        }
+    }
 
-            changeStatusMessage("Fetching character images....")
+    private suspend fun fetchCharacterImages() {
+        if (characters.size == 0) return
 
+        var runningTaskCount = 0
+        var doneTaskCount = 0
+        val runningTaskLimit = 5
+        val waitingTime = 100.toLong()
+        val usingMainThreadInterval = 1000.toLong()
+        var isFetchingImages = true
+        val mutex = Mutex()
+
+        changeStatusMessage("Fetching character images....")
+
+        /**
+         * to avoid to occupy Main-Thread too frequently,
+         * do the process with time interval
+         * Doing the process every time fetching a image will cause a bug of ignoring ui events
+         */
+        viewModelScope.launch(Dispatchers.IO) {
+            while (isFetchingImages) {
+                delay(usingMainThreadInterval)
+                updateLiveCharacter()
+            }
+        }
+
+        for (i in characters.indices) {
             /**
-             * to avoid to occupy Main-Thread too frequently,
-             * do the process with time interval
-             * Doing the process every time fetching a image will cause a bug of ignoring ui events
+             * to prevent lots of tasks from running at the same time,
+             * until the number of running tasks is under the limit,
+             * never launch another task
              */
-            viewModelScope.launch(Dispatchers.IO) {
-                while (isFetchingImages) {
-                    delay(usingMainThreadInterval)
-                    updateLiveCharacter()
-                }
+            while (runningTaskCount > runningTaskLimit) {
+                delay(waitingTime)
             }
 
-            for (i in characters.indices) {
-                /**
-                 * to prevent lots of tasks from running at the same time,
-                 * until the number of running tasks is under the limit,
-                 * never launch another task
-                 */
-                while (runningTaskCount > runningTaskLimit) {
-                    delay(waitingTime)
+            viewModelScope.launch(Dispatchers.IO) {
+                val urlStr = characters[i].imageUrl
+
+                mutex.withLock {
+                    runningTaskCount++
+                }
+                val image = characterImageRepository.fetchImage(urlStr)
+                mutex.withLock {
+                    runningTaskCount--
                 }
 
-                viewModelScope.launch(Dispatchers.IO) {
-                    val urlStr = characters[i].imageUrl
+                characters[i].image = image
 
-                    mutex.withLock {
-                        runningTaskCount++
-                    }
-                    val image = characterImageRepository.fetchImage(urlStr)
-                    mutex.withLock {
-                        runningTaskCount--
-                    }
-
-                    characters[i].image = image
-
-                    /**
-                     * without mutex, counting massive number(ex: 10,000) can not be done correctly
-                     * Ref: https://kotlinlang.org/docs/shared-mutable-state-and-concurrency.html#mutual-exclusion
-                     */
-                    mutex.withLock {
-                        doneTaskCount++ // even if fetching image is failed, count up
-                    }
-                    if (doneTaskCount == characters.size) {
-                        isFetchingImages = false
-                        changeStatusMessage("Finished all fetching task !!!")
-                    }
+                /**
+                 * without mutex, counting massive number(ex: 10,000) can not be done correctly
+                 * Ref: https://kotlinlang.org/docs/shared-mutable-state-and-concurrency.html#mutual-exclusion
+                 */
+                mutex.withLock {
+                    doneTaskCount++ // even if fetching image is failed, count up
+                }
+                if (doneTaskCount == characters.size) {
+                    isFetchingImages = false
+                    changeStatusMessage("Finished all fetching task !!!")
                 }
             }
         }
@@ -143,7 +149,7 @@ class CharacterListViewModel : ViewModel() {
 
     private fun updateLiveCharacter() {
         viewModelScope.launch(Dispatchers.Main) {
-            liveCharacters.value = characters
+            liveCharacters.value = filterCharacters()
         }
     }
 
