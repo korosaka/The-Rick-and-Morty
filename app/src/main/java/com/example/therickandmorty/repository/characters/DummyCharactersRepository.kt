@@ -2,6 +2,9 @@ package com.example.therickandmorty.repository.characters
 
 import com.example.therickandmorty.model.character.CharacterHeadline
 
+/**
+ * This repository is for test that app works correctly when the number of characters data is large
+ */
 class DummyCharactersRepository : CharactersRepositoryInterface {
 
     override fun fetchCharacters(urlStr: String): MutableList<CharacterHeadline>? {
