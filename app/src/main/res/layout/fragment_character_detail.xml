@@ -15,6 +15,15 @@
         android:background="#ffffe0"
         android:orientation="vertical">
 
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#dc143c"
+            android:padding="10dp"
+            android:text="@={view_model.statusMessage}"
+            android:textColor="#ffffff"
+            android:textStyle="bold" />
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

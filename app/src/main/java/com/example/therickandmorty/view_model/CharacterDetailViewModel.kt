@@ -14,6 +14,7 @@ class CharacterDetailViewModel : ViewModel() {
     var characterId: String? = null
     private var characterDetail: CharacterDetail? = null
     var liveCharacterDetail: MutableLiveData<CharacterDetail?> = MutableLiveData()
+    var statusMessage: MutableLiveData<String> = MutableLiveData()
 
     private val characterDetailRepo: CharacterDetailRepository
     private val characterImageRepo: CharacterImageRepository
@@ -22,25 +23,52 @@ class CharacterDetailViewModel : ViewModel() {
         liveCharacterDetail = MutableLiveData(characterDetail)
         characterDetailRepo = CharacterDetailRepository()
         characterImageRepo = CharacterImageRepository()
+        statusMessage.value = "default"
     }
 
     fun fetchCharacterDetail() {
-        val id = characterId ?: return // TODO error display
+
+        if (characterId == null) {
+            changeStatusMessage("Failed fetching ! (NON-ID)")
+            return
+        }
+        val id = characterId!!
 
         viewModelScope.launch(Dispatchers.IO) {
             // TASK-1: fetching character data except image
+            changeStatusMessage("Fetching character data....")
             characterDetail =
-                characterDetailRepo.fetchCharacterDetail(id) ?: return@launch // TODO error display
+                characterDetailRepo.fetchCharacterDetail(id)
+            if (characterDetail == null) {
+                changeStatusMessage("Failed fetching character data")
+                return@launch
+            }
             viewModelScope.launch(Dispatchers.Main) {
                 liveCharacterDetail.value = characterDetail
             }
 
             // TASK-2: fetching image
-            val imageUrl = characterDetail?.imageUrl ?: return@launch // TODO error display
+            val imageUrl = characterDetail?.imageUrl
+            if (imageUrl == null) {
+                changeStatusMessage("Failed fetching image ! (NON-URL)")
+                return@launch
+            }
+            changeStatusMessage("Fetching character image....")
             characterDetail?.image = characterImageRepo.fetchImage(imageUrl)
+            if (characterDetail?.image == null) {
+                changeStatusMessage("Failed fetching image !")
+                return@launch
+            }
             viewModelScope.launch(Dispatchers.Main) {
                 liveCharacterDetail.value = characterDetail
+                changeStatusMessage("Finished all fetching task !!")
             }
+        }
+    }
+
+    private fun changeStatusMessage(message: String) {
+        viewModelScope.launch(Dispatchers.Main) {
+            statusMessage.value = message
         }
     }
 }
