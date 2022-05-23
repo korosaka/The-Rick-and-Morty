@@ -1,6 +1,6 @@
 # About
-![Screen shots](https://github.com/korosaka/source_image/blob/main/weather_android/weather_app_android.png)
-This app shows the current weather info using free web service.
+![rick_and_morty](https://user-images.githubusercontent.com/40596635/169728596-0b9bcbde-c985-4335-be5c-a4790b03b174.png)
+This app shows Rick and Morty characters.
 
 # Design Pattern
 - MVVM
@@ -9,6 +9,6 @@ This app shows the current weather info using free web service.
 - Language: kotlin
 - DataBinding: LiveData, ViewModel
 - Async Tool: Coroutines
-- API: Retrofit, REST API: https://openweathermap.org/current
+- API: Retrofit, REST API: https://rickandmortyapi.com/
 - View: Activity, Fragment, RecyclerView
 
